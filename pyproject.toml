@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel", "setuptools-ocrd"]
+
+[project]
+name = "ocrd_pagetopdf"
+authors = [
+    {name = "Jan Kamlah", email = "jan.kamlah@uni-mannheim.de"},
+    {name = "Robert Sachunsky", email = "robert.sachunsky@slub-dresden.de"},
+]
+description = "OCR-D wrapper for prima-pagetopdf"
+readme = "README.md"
+license.file = "LICENSE"
+requires-python = ">=3.8"
+keywords = ["ocr", "ocr-d", "page-xml"]
+
+dynamic = ["version", "dependencies"]
+
+# https://pypi.org/classifiers/
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Text Processing",
+]
+
+[project.scripts]
+ocrd-pagetopdf = "ocrd_pagetopdf.cli:ocrd_pagetopdf"
+
+[project.urls]
+Homepage = "https://github.com/UB-Mannheim/ocrd_pagetopdf"
+Repository = "https://github.com/UB-Mannheim/ocrd_pagetopdf.git"
+
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.package-data]
+"*" = ["PageToPdf.jar", "*.ttf", "*.txt", "*.otf", "ocrd-tool.json"]
+"ocrd_pagetopdf.lib" = ["*.jar"]
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+ignore_missing_imports = true
+strict = true
+disallow_subclassing_any = false
+# ❗ error: Class cannot subclass "Processor" (has type "Any")
+disallow_any_generics = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+[tool.coverage.run]
+branch = true
+source = [
+    "ocrd_pagetopdf"
+]
+concurrency = [
+    "thread",
+    "multiprocessing"
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "if self\\.debug",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+ignore_errors = true
+omit = [
+    "ocrd_pagetopdf/cli.py"
+]

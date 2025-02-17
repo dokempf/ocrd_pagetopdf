@@ -1,6 +1,7 @@
 {
-  "version": "0.0.2",
-  "git_url": "https://github.com/jkamlah/ocrd_pagetopdf",
+  "version": "0.1.0",
+  "git_url": "https://github.com/UB-Mannheim/ocrd_pagetopdf",
+  "dockerhub": "ocrd/pagetopdf",
   "tools": {
     "ocrd-pagetopdf": {
       "executable": "ocrd-pagetopdf",
@@ -11,12 +12,8 @@
       "steps": [
         "postprocessing/format-conversion"
       ],
-      "input_file_grp": [
-        "OCR-D-OCR-PAGE"
-      ],
-      "output_file_grp": [
-        "OCR-D-OCR-PDF"
-      ],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
       "parameters": {
         "font": {
           "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
@@ -69,13 +66,13 @@
             "type": "string",
             "default": "pageId",
             "enum": [
-            "pagenumber",
-            "pageId",
-            "basename",
-            "basename_without_extension",
-            "local_filename",
-            "ID",
-            "url"
+                "pagenumber",
+                "pageId",
+                "basename",
+                "basename_without_extension",
+                "local_filename",
+                "ID",
+                "url"
              ]
         },
         "script-args": {
