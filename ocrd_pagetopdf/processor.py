@@ -161,6 +161,9 @@ class PAGE2PDF(Processor):
                         for glyph in word.get_Glyph():
                             glyph_polygon = coordinates_of_segment(glyph, page_image, page_coords)
                             glyph.get_Coords().set_points(points_from_polygon(glyph_polygon))
+        page.set_imageWidth(page_image.width)
+        page.set_imageHeight(page_image.height)
+        page.set_imageFilename("image.png")
         if self.parameter['negative2zero']:
             self._repair(pcgts)
 
