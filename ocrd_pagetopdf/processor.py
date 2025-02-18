@@ -94,18 +94,18 @@ class PAGE2PDF(Processor):
                 metadata = multipagepdf.get_metadata(ws.mets)
             else:
                 metadata = multipagepdf.get_metadata(workspace.mets)
-            if multipagepdf.pdfmerge(
-                    pdffiles, output_file_path,
-                    pagelabels=pagelabels, metadata=metadata,
-                    log=self.logger):
-                workspace.add_file(
-                    file_id=output_file_id,
-                    file_grp=self.output_file_grp,
-                    local_filename=output_file_path,
-                    mimetype="application/pdf",
-                    page_id=None,
-                    force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
-                )
+            multipagepdf.pdfmerge(
+                pdffiles, output_file_path,
+                pagelabels=pagelabels, metadata=metadata,
+                log=self.logger)
+            workspace.add_file(
+                file_id=output_file_id,
+                file_grp=self.output_file_grp,
+                local_filename=output_file_path,
+                mimetype="application/pdf",
+                page_id=None,
+                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+            )
 
     def process_page_file(self, input_file: OcrdFileType) -> None:
         """Converts all pages of the document to PDF

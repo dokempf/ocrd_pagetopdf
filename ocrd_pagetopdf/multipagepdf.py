@@ -51,7 +51,7 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
             marks.write("] >> >> /PUT pdfmark")
     return pdfmarks
 
-def pdfmerge(inputfiles: List[str], outputfile: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None, log=None) -> bool:
+def pdfmerge(inputfiles: List[str], outputfile: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None, log=None) -> None:
     if log is None:
         log = getLogger('ocrd.processor.pagetopdf')
     inputfiles = ' '.join(inputfiles)
@@ -70,6 +70,4 @@ def pdfmerge(inputfiles: List[str], outputfile: str, pagelabels: Optional[List[s
         if result.stderr:
             log.warning("gs stderr: %s", result.stderr)
         if result.returncode != 0:
-            log.error("gs command for multipage PDF %s failed - %s", outputfile, result)
-            return False
-    return True
+            raise Exception("gs command for multipage PDF %s failed" % outputfile, result.args, result.stdout, result.stderr)
