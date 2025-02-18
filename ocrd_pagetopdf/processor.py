@@ -137,11 +137,13 @@ class PAGE2PDF(Processor):
         # --- equivalent of process_page_pcgts vvv
         pcgts = input_pcgts
         page = pcgts.get_Page()
-        # get maximally annotated image
+        # get maximally annotated image matching requested features
+        feature_selector = self.parameter['image_feature_selector']
+        feature_filter = self.parameter['image_feature_filter']
         page_image, page_coords, _ = self.workspace.image_from_page(
             page, page_id,
-            #feature_filter=feature_filter,
-            #feature_selector=feature_selector
+            feature_filter=feature_filter,
+            feature_selector=feature_selector
         )
         # get matching PAGE (transform all coordinates)
         page.set_Border(None)
