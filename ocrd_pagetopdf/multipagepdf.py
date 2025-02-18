@@ -64,15 +64,17 @@ def get_metadata(mets):
     }
 
 def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
-    inputfiles = []
+    file_names = []
     pagelabels = []
+    file_ids = []
     for f in mets.find_files(mimetype='application/pdf', fileGrp=filegrp, pageId=page_ids or None):
         # ignore existing multipage PDFs
         if f.pageId:
-            inputfiles.append(f.local_filename)
+            file_names.append(f.local_filename)
             if pagelabel != "pagenumber":
                 pagelabels.append(getattr(f, pagelabel, ""))
-    return inputfiles, pagelabels
+            file_ids.append(f.ID)
+    return file_names, pagelabels, file_ids
 
 def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None) -> str:
     pdfmarks = os.path.join(directory, 'pdfmarks.ps')

@@ -79,7 +79,7 @@ class PAGE2PDF(Processor):
             if not output_file_path.lower().endswith('.pdf'):
                 output_file_path += '.pdf'
             self.logger.info("aggregating multi-page PDF to %s", output_file_path)
-            pdffiles, pagelabels = multipagepdf.read_from_mets(
+            pdffiles, pagelabels, pdffile_ids = multipagepdf.read_from_mets(
                 workspace.mets, self.output_file_grp, self.page_id,
                 pagelabel=self.parameter['pagelabel']
             )
@@ -106,6 +106,10 @@ class PAGE2PDF(Processor):
                 page_id=None,
                 force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
+            if self.parameter['multipage_only']:
+                for pdffile_id in pdffile_ids:
+                    # FIXME: does not work with METS Server!
+                    workspace.remove_file(pdffile_id)
 
     def process_page_file(self, input_file: OcrdFileType) -> None:
         """Converts all pages of the document to PDF

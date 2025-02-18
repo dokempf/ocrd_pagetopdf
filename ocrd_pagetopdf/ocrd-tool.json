@@ -57,9 +57,9 @@
           ]
         },
         "negative2zero": {
-            "description": "Repair invalid or inconsistent coordinates before trying to convert.",
-            "type": "boolean",
-            "default": false
+          "description": "Repair invalid or inconsistent coordinates before trying to convert.",
+          "type": "boolean",
+          "default": false
         },
         "ext": {
           "description": "Output filename extension",
@@ -67,23 +67,28 @@
           "default": ".pdf"
         },
         "multipage": {
-            "description": "Merge all PDFs into one multipage file. The value is used as filename for the PDF.",
-            "type": "string",
-            "default": ""
+          "description": "Merge all PDFs into one multipage file. The value is used as METS file ID and file basename for the PDF.",
+          "type": "string",
+          "default": ""
+        },
+        "multipage_only": {
+          "description": "When producing a `multipage`, do not add single-page files into the output fileGrp (but use a temporary directory for them).",
+          "type": "boolean",
+          "default": false
         },
         "pagelabel": {
-            "description": "Parameter for 'multipage': Set the page information, which will be used as pagelabel. Default is 'pageId', e.g. the option 'pagenumber' will create numbered pagelabel consecutively",
-            "type": "string",
-            "default": "pageId",
+          "description": "Parameter for 'multipage': Set the page information, which will be used as pagelabel. Default is 'pageId', e.g. the option 'pagenumber' will create numbered pagelabel consecutively",
+          "type": "string",
+          "default": "pageId",
             "enum": [
-                "pagenumber",
-                "pageId",
-                "basename",
-                "basename_without_extension",
-                "local_filename",
-                "ID",
-                "url"
-             ]
+              "pagenumber",
+              "pageId",
+              "basename",
+              "basename_without_extension",
+              "local_filename",
+              "ID",
+              "url"
+            ]
         },
         "script-args": {
           "description": "Extra arguments to PageToPdf (see https://github.com/PRImA-Research-Lab/prima-page-to-pdf)",
