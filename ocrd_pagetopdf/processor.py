@@ -165,7 +165,9 @@ class PAGE2PDF(Processor):
         page.set_imageHeight(page_image.height)
         page.set_imageFilename("image.png")
         if self.parameter['negative2zero']:
-            self._repair(pcgts)
+            self._repair(pcgts, page_id)
+        if self.parameter['textequiv_level']:
+            self._inspect(pcgts, page_id)
 
         # write image and PAGE into temporary directory and convert
         with TemporaryDirectory(suffix=page_id) as tmpdir:
@@ -205,7 +207,7 @@ class PAGE2PDF(Processor):
             mimetype='application/pdf',
         )
 
-    def _repair(self, pcgts):
+    def _repair(self, pcgts, page_id):
         # instead of ad-hoc repairs, just run the PAGE validator,
         # then proceed as in ocrd-segment-repair
         report = PageValidator.validate(
@@ -213,39 +215,37 @@ class PAGE2PDF(Processor):
             page_textequiv_consistency='off',
             check_baseline=False)
         page = pcgts.get_Page()
+        regions = page.get_AllRegions()
+        textregions = page.get_AllRegions(classes=['Text'])
+        lines = [line for region in textregions
+                 for line in region.get_TextLine()]
+        words = [word for line in lines
+                 for word in line.get_Word()]
+        glyphs = [glyph for word in words
+                  for glyph in word.get_Glyph()]
         for error in report.errors:
             if isinstance(error, (CoordinateConsistencyError,CoordinateValidityError)):
                 if error.tag == 'Page':
                     element = page.get_Border()
                 elif error.tag.endswith('Region'):
-                    element = next((region
-                                    for region in page.get_AllRegions()
+                    element = next((region for region in regions
                                     if region.id == error.ID), None)
                 elif error.tag == 'TextLine':
-                    element = next((line
-                                    for region in page.get_AllRegions(classes=['Text'])
-                                    for line in region.get_TextLine()
+                    element = next((line for line in lines
                                     if line.id == error.ID), None)
                 elif error.tag == 'Word':
-                    element = next((word
-                                    for region in page.get_AllRegions(classes=['Text'])
-                                    for line in region.get_TextLine()
-                                    for word in line.get_Word()
+                    element = next((word for word in words
                                     if word.id == error.ID), None)
                 elif error.tag == 'Glyph':
-                    element = next((glyph
-                                    for region in page.get_AllRegions(classes=['Text'])
-                                    for line in region.get_TextLine()
-                                    for word in line.get_Word()
-                                    for glyph in word.get_Glyph()
+                    element = next((glyph for glyph in glyphs
                                     if glyph.id == error.ID), None)
                 else:
-                    self.logger.error("Unrepairable error for unknown segment type: %s",
-                                      str(error))
+                    self.logger.error("Unrepairable error for unknown segment type '%s' on page %s",
+                                      str(error), page_id)
                     continue
                 if not element:
-                    self.logger.error("Unrepairable error for unknown segment element: %s",
-                              str(error))
+                    self.logger.error("Unrepairable error for unknown segment element '%s' on page %s",
+                                      str(error), page_id)
                     continue
                 try:
                     if isinstance(error, CoordinateConsistencyError):
@@ -253,13 +253,43 @@ class PAGE2PDF(Processor):
                     else:
                         ensure_valid(element)
                 except Exception as e:
-                    self.logger.error(str(e)) # exc_info=e
+                    self.logger.error("Cannot fix %s for %s '%s' on page %s: %s", # exc_info=e
+                                      error.__class__.__name__, error.tag, error.ID, page_id, str(e))
                     continue
-                self.logger.info("Fixed %s for %s '%s'", error.__class__.__name__,
-                                 error.tag, error.ID)
+                self.logger.info("Fixed %s for %s '%s' on page %s",
+                                 error.__class__.__name__, error.tag, error.ID, page_id)
             else:
-                self.logger.warning("Ignoring other validation error: %s", str(error))
+                self.logger.warning("Ignoring other validation error on page %s: %s",
+                                    page_id, str(error))
 
+    def _inspect(self, pcgts, page_id):
+        level = self.parameter['textequiv_level']
+        if not level:
+            return
+        regions = pcgts.get_Page().get_AllRegions(classes=['Text'])
+        if level == 'region':
+            if any(page_element_unicode0(region)
+                   for region in regions):
+                return
+        lines = [line for region in regions
+                 for line in region.get_TextLine()]
+        if level == 'line':
+            if any(page_element_unicode0(line)
+                   for line in lines):
+                return
+        words = [word for line in lines
+                 for word in line.get_Word()]
+        if level == 'word':
+            if any(page_element_unicode0(word)
+                   for word in words):
+                return
+        glyphs = [glyph for word in words
+                  for glyph in word.get_Glyph()]
+        if level == 'glyph':
+            if any(page_element_unicode0(glyph)
+                   for glyph in glyphs):
+                return
+        self.logger.warning("no text at %s level on page %s", level, page_id)
 
 # remaineder is from ocrd_segment:
 
@@ -454,3 +484,10 @@ def ensure_valid(element):
     if changed:
         points = points_from_polygon(polygon)
         coords.set_points(points)
+
+def page_element_unicode0(element):
+    """Get Unicode string of the first text result."""
+    if element.get_TextEquiv():
+        return element.get_TextEquiv()[0].Unicode or ''
+    else:
+        return ''
