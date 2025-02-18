@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from datetime import datetime
 from typing import Dict, List, Optional
 import os.path
 from tempfile import TemporaryDirectory
@@ -9,16 +10,57 @@ import subprocess
 from ocrd_models.constants import NAMESPACES as NS
 
 def get_metadata(mets):
-    title = mets._tree.getroot().find('.//mods:title', NS)
-    subtitle = mets._tree.getroot().find('.//mods:subtitle', NS)
-    title = title.text if title is not None else ""
-    title += "Subtitle: "+subtitle.text if subtitle else ""
-    publisher = mets._tree.getroot().find('.//mods:publisher', NS)
-    author = mets._tree.getroot().find('.//mods:creator', NS)
+    mets = mets._tree.getroot()
+    metshdr = mets.find('.//mets:metsHdr', NS)
+    createdate = metshdr.attrib.get('CREATEDATE', '') if metshdr is not None else ''
+    modifieddate = metshdr.attrib.get('LASTMODDATE', '') if metshdr is not None else ''
+    creator = mets.xpath('.//mets:agent[@ROLE="CREATOR"]/mets:name', namespaces=NS)
+    titlestring = ""
+    titleinfo = mets.find('.//mods:titleInfo', NS)
+    if titleinfo is not None:
+        title = titleinfo.find('.//mods:title', NS)
+        titlestring += title.text if title is not None else ""
+        for subtitle in titleinfo.findall('.//mods:subtitle', NS):
+            titlestring += " - " + subtitle.text if subtitle else ""
+        part = titleinfo.find('.//mods:partNumber', NS)
+        titlestring += " - " + part.text if part else ""
+        part = titleinfo.find('.//mods:partName', NS)
+        titlestring += " - " + part.text if part else ""
+    author = (mets.xpath('.//mods:name[mods:role/text()="aut"]'
+                        '/mods:namePart[@type="family" or @type="given"]', namespaces=NS) +
+              mets.xpath('.//mods:name[mods:role/text()="cre"]'
+                         '/mods:namePart[@type="family" or @type="given"]', namespaces=NS))
+    author = next((part.text for part in author
+                   if part.attrib["type"] == "given"), "") \
+        + next((" " + part.text for part in author
+                if part.attrib["type"] == "family"), "")
+    origin = mets.find('.//mods:originInfo', NS)
+    if origin is not None:
+        publisher = origin.find('.//mods:publisher', NS)
+        publdate = origin.find('.//mods:dateIssued', NS)
+        digidate = origin.find('.//mods:dateCaptured', NS)
+    publisher = publisher.text + " (Publisher)" if publisher is not None else ""
+    publdate = publdate.text if publdate is not None else ""
+    digidate = digidate.text if digidate is not None else ""
+    def iso8601toiso32000(datestring):
+        date = datetime.fromisoformat(datestring)
+        offset = date.utcoffset()
+        tz_hours, tz_seconds = divmod(offset.seconds if offset else 0, 3600)
+        tz_minutes = tz_seconds // 60
+        datestring = date.strftime("%Y%m%d%H%M%S")
+        datestring += f"Z{tz_hours}'{tz_minutes}'"
+        return datestring
+    access = mets.find('.//mods:accessCondition', NS)
     return {
-        'Author': author.text if author is not None else "",
-        'Title': title,
-        'Keywords': publisher.text+" (Publisher)" if publisher is not None else "",
+        'Author': author,
+        'Title': titlestring,
+        'Keywords': publisher,
+        'Description': "",
+        'Creator': creator[0].text if len(creator) else "",
+        'Published': publdate,
+        # only via XMP: 'Access condition': access.text if access is not None else "",
+        'CreationDate': iso8601toiso32000(createdate) if createdate else "",
+        'ModDate': iso8601toiso32000(modifieddate) if modifieddate else "",
     }
 
 def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
@@ -41,6 +83,9 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
                 if metaval:
                     marks.write(f"/{metakey} ({metaval})\n")
             marks.write("/DOCINFO pdfmark\n")
+        # fixme: add XMP-embedded metadata:
+        # - DC (https://www.loc.gov/standards/mods/mods-dcsimple.html)
+        # - MODS-RDF (https://www.loc.gov/standards/mods/modsrdf/primer-2.html)
         if pagelabels:
             marks.write("[{Catalog} <<\n\
                     /PageLabels <<\n\
