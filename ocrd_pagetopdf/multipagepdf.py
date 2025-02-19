@@ -16,8 +16,10 @@ def get_metadata(mets):
     modifieddate = metshdr.attrib.get('LASTMODDATE', '') if metshdr is not None else ''
     creator = mets.xpath('.//mets:agent[@ROLE="CREATOR"]/mets:name', namespaces=NS)
     titlestring = ""
-    titleinfo = mets.find('.//mods:titleInfo', NS)
-    if titleinfo is not None:
+    titleinfos = mets.findall('.//mods:titleInfo', NS)
+    for titleinfo in titleinfos:
+        if titleinfo.getparent().tag == "{%s}relatedItem" % NS['mods']:
+            continue
         title = titleinfo.find('.//mods:title', NS)
         titlestring += title.text if title is not None else ""
         for subtitle in titleinfo.findall('.//mods:subtitle', NS):
@@ -26,6 +28,7 @@ def get_metadata(mets):
         titlestring += " - " + part.text if part else ""
         part = titleinfo.find('.//mods:partName', NS)
         titlestring += " - " + part.text if part else ""
+        break
     author = (mets.xpath('.//mods:name[mods:role/text()="aut"]'
                         '/mods:namePart[@type="family" or @type="given"]', namespaces=NS) +
               mets.xpath('.//mods:name[mods:role/text()="cre"]'
