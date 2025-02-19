@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from importlib.metadata import version
 from datetime import datetime
 from typing import Dict, List, Optional
 import os.path
@@ -60,6 +61,7 @@ def get_metadata(mets):
         'Keywords': publisher,
         'Description': "",
         'Creator': creator[0].text if len(creator) else "",
+        'Producer': __package__ + " v" + version(__package__),
         'Published': publdate,
         # only via XMP: 'Access condition': access.text if access is not None else "",
         'CreationDate': iso8601toiso32000(createdate) if createdate else "",
