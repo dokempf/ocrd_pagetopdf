@@ -72,11 +72,32 @@ def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
     file_names = []
     pagelabels = []
     file_ids = []
+    if pagelabel == "pagelabel":
+        pages = mets.get_physical_pages(for_pageIds=page_ids, return_divs=True)
     for f in mets.find_files(mimetype='application/pdf', fileGrp=filegrp, pageId=page_ids or None):
         # ignore existing multipage PDFs
         if f.pageId:
             file_names.append(f.local_filename)
-            if pagelabel != "pagenumber":
+            if pagelabel == "pagenumber":
+                pass
+            elif pagelabel == "pagelabel":
+                for page in pages:
+                    if page.get('ID') == f.pageId:
+                        order = page.get('ORDER') or ''
+                        orderlabel = page.get('ORDERLABEL') or ''
+                        label = page.get('LABEL') or ''
+                        if label and orderlabel:
+                            pagelabels.append(orderlabel + ' - ' + label)
+                        elif orderlabel:
+                            pagelabels.append(orderlabel)
+                        elif label:
+                            pagelabels.append(label)
+                        elif order:
+                            pagelabels.append(order)
+                        else:
+                            pagelabels.append("")
+                        break
+            else:
                 pagelabels.append(getattr(f, pagelabel, ""))
             file_ids.append(f.ID)
     return file_names, pagelabels, file_ids

@@ -121,14 +121,6 @@ class PAGE2PDF(Processor):
         page_id = input_file.pageId
         self._base_logger.info("processing page %s", page_id)
         self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
-        try:
-            page_ = page_from_file(input_file)
-            assert isinstance(page_, OcrdPage)
-            input_pcgts = page_
-        except ValueError as err:
-            # not PAGE and not an image to generate PAGE for
-            self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
-            return
         output_file_id = make_file_id(input_file, self.output_file_grp)
         output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
         if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
@@ -137,6 +129,14 @@ class PAGE2PDF(Processor):
                 f"A file with ID=={output_file_id} already exists {output_file} and neither force nor ignore are set"
             )
         output_file_path = os.path.join(self.output_file_grp, output_file_id + self.parameter['ext'])
+        try:
+            page_ = page_from_file(input_file)
+            assert isinstance(page_, OcrdPage)
+            input_pcgts = page_
+        except ValueError as err:
+            # not PAGE and not an image to generate PAGE for
+            self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
+            return
 
         # --- equivalent of process_page_pcgts vvv
         pcgts = input_pcgts

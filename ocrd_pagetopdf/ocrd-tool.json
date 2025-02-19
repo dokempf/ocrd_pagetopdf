@@ -77,11 +77,12 @@
           "default": false
         },
         "pagelabel": {
-          "description": "Parameter for 'multipage': Set the page information, which will be used as pagelabel. Default is 'pageId', e.g. the option 'pagenumber' will create numbered pagelabel consecutively",
+          "description": "Parameter for 'multipage': Set the labels used as page outlines.\n\n - 'pageId': physical page ID,\n\n - 'pagenumber': use consecutive numbers,\n\n - 'pagelabel': use '@ORDERLABEL - @LABEL',\n\n - 'basename': use the name of the input file,\n\n - 'local_filename': use the href relative path of the input file,\n\n - 'url': use the href URL of the input file,\n\n - 'ID': use the file ID of the input file",
           "type": "string",
           "default": "pageId",
             "enum": [
               "pagenumber",
+              "pagelabel",
               "pageId",
               "basename",
               "basename_without_extension",
