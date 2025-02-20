@@ -5,7 +5,7 @@
   "tools": {
     "ocrd-pagetopdf": {
       "executable": "ocrd-pagetopdf",
-      "description": "Convert text and layout annotations to PDF format (overlaying original image with text layer and polygon outlines)",
+      "description": "Convert text and layout annotations from PAGE to PDF format (overlaying original image with text layer and polygon outlines)",
       "categories": [
         "Long-term preservation"
       ],
@@ -25,6 +25,91 @@
           "default": "",
           "description": "comma-separated list of forbidden image features (e.g. binarized,despeckled,cropped,deskewed,rotated-90)"
         },
+        "font": {
+          "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
+          "type": "string",
+          "format": "uri",
+          "content-type": "application/x-font-ttf",
+          "default": ""
+        },
+       "outlines": {
+          "description": "What segment hierarchy to draw coordinate outlines for. If unset, no outlines are drawn.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "textequiv_level": {
+          "description": "What segment hierarchy level to render text output from. If unset, no text is rendered.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "negative2zero": {
+          "description": "Repair invalid or inconsistent coordinates before trying to convert.",
+          "type": "boolean",
+          "default": false
+        },
+        "ext": {
+          "description": "Output filename extension",
+          "type": "string",
+          "default": ".pdf"
+        },
+        "multipage": {
+          "description": "Merge all PDFs into one multipage file. The value is used as METS file ID and file basename for the PDF.",
+          "type": "string",
+          "default": ""
+        },
+        "multipage_only": {
+          "description": "When producing a `multipage`, do not add single-page files into the output fileGrp (but use a temporary directory for them).",
+          "type": "boolean",
+          "default": false
+        },
+        "pagelabel": {
+          "description": "Parameter for 'multipage': Set the labels used as page outlines.\n\n - 'pageId': physical page ID,\n\n - 'pagenumber': use consecutive numbers,\n\n - 'pagelabel': use '@ORDERLABEL - @LABEL',\n\n - 'basename': use the name of the input file,\n\n - 'local_filename': use the href relative path of the input file,\n\n - 'url': use the href URL of the input file,\n\n - 'ID': use the file ID of the input file",
+          "type": "string",
+          "default": "pageId",
+            "enum": [
+              "pagenumber",
+              "pagelabel",
+              "pageId",
+              "basename",
+              "basename_without_extension",
+              "local_filename",
+              "ID",
+              "url"
+            ]
+        },
+        "script-args": {
+          "description": "Extra arguments to PageToPdf (see https://github.com/PRImA-Research-Lab/prima-page-to-pdf)",
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "ocrd-altotopdf": {
+      "executable": "ocrd-altotopdf",
+      "description": "Convert text and layout annotations from ALTO to PDF format (overlaying original image with text layer and polygon outlines)",
+      "categories": [
+        "Long-term preservation"
+      ],
+      "steps": [
+        "postprocessing/format-conversion"
+      ],
+      "input_file_grp_cardinality": 2,
+      "output_file_grp_cardinality": 1,
+      "parameters": {
         "font": {
           "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
           "type": "string",

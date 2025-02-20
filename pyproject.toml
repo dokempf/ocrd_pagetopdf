@@ -29,6 +29,7 @@ classifiers = [
 
 [project.scripts]
 ocrd-pagetopdf = "ocrd_pagetopdf.cli:ocrd_pagetopdf"
+ocrd-altotopdf = "ocrd_pagetopdf.cli:ocrd_altotopdf"
 
 [project.urls]
 Homepage = "https://github.com/UB-Mannheim/ocrd_pagetopdf"
