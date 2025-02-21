@@ -87,9 +87,9 @@ def get_metadata(mets):
                                           [titleinfo.find('.//mods:partName', NS)])
                                   if titlepart is not None)
         break
-    author = (mods.xpath('.//mods:name[mods:role/text()="aut"]'
+    author = (mods.xpath('.//mods:name[mods:role/mods:roleTerm[@type="code"]/text()="aut"]'
                         '/mods:namePart[@type="family" or @type="given"]', namespaces=NS) +
-              mods.xpath('.//mods:name[mods:role/text()="cre"]'
+              mods.xpath('.//mods:name[mods:role/mods:roleTerm[@type="code"]/text()="cre"]'
                          '/mods:namePart[@type="family" or @type="given"]', namespaces=NS))
     author = next((part.text for part in author
                    if part.attrib["type"] == "given"), "") \
@@ -177,7 +177,7 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
             marks.write("[ ")
             for metakey, metaval in metadata.items():
                 if metaval:
-                    marks.write(f"/{metakey} {pdfmark_string(metaval)}\n")
+                    marks.write(f"/{metakey} {pdfmark_string(metaval.strip())}\n")
             marks.write("/DOCINFO pdfmark\n\n")
             if mods:
                 # add XMP-embedded metadata
