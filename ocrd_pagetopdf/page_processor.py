@@ -114,8 +114,28 @@ class PAGE2PDF(Processor):
     def process_page_file(self, input_file: OcrdFileType) -> None:
         """Converts all pages of the document to PDF
 
-        Open and deserialize PAGE input files and their respective images,
-        then go to the page hierarchy level... FIXME
+        For each page, open and deserialize PAGE input file and its respective image.
+        Then extract a derived image of the (cropped, deskewed, binarized...) page,
+        with features depending on ``image_feature_selector`` (a comma-separated list
+        of required image features, cf. :py:func:`ocrd.workspace.Workspace.image_from_page`)
+        and ``image_feature_filter`` (a comma-separated list of forbidden image features).
+
+        Next, generate a temporary PAGE output file for that very image (adapting all
+        coordinates if necessary). If ``negative2zero`` is set, validate and repair
+        invalid or inconsistent coordinates.
+
+        \b
+        Convert the PAGE/image pair with PRImA PageToPdf, applying
+        - ``textequiv_level`` (i.e. `-text-source`) to retrieve a text layer, if set;
+        - ``outlines`` to draw boundary polygons, if set;
+        - ``font`` accordingly.
+
+        Copy the resulting PDF file to the output file group and reference it in the METS.
+
+        Finally, if ``multipage`` is set, then concatenate all generated files to
+        a multi-page PDF file, setting ``pagelabels`` accordingly, as well as PDF metadata
+        and bookmarks. Reference it with ``multipage`` as ID in the output file group, too.
+        If ``multipage_only`` is also set, then remove the single-page PDF files afterwards.
         """
         assert isinstance(input_file, get_args(OcrdFileType))
         page_id = input_file.pageId

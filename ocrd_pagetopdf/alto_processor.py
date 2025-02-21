@@ -36,21 +36,25 @@ class ALTO2PDF(PAGE2PDF):
     def process_page_file(self, *input_files: Optional[OcrdFileType]) -> None:
         """Converts all pages of the document to PDF
 
-        Find ALTO input files in the first fileGrp,
-        together with the image input files in the second fileGrp,
-        then first convert ALTO to PAGE in a temporary location.
-        Next, convert PAGE to PDF in a temporary location.
-        Copy to the output fileGrp on success and reference those
-        files in the METS.
+        For each page, find the ALTO input file in the first fileGrp,
+        together with the image input file in the second fileGrp.
 
-        If 'outlines',...
-        If 'textequiv_level'...
-        If 'negative2zero'...
+        Then convert ALTO to PAGE with PRImA PageConverter in a temporary location.
 
-        Finally, if 'multipage' is set, then concatenate all files to
-        a multi-page PDF file, setting 'pagelabels' accordingly. 
-        Reference that file with 'multipage' as ID in the output fileGrp.
-        If 'multipage_only' is also set, then remove the single-page PDF files afterwards.
+        \b
+        Next convert the PAGE/image pair with PRImA PageToPdf in a temporary location,
+        applying
+        - ``textequiv_level`` (i.e. `-text-source`) to retrieve a text layer, if set;
+        - ``outlines`` to draw boundary polygons, if set;
+        - ``font`` accordingly;
+        - ``negative2zero`` (i.e. `-neg-coords toZero`) to repair negative coordintes.
+
+        Copy to the resulting PDF file to the output file group and reference it in the METS.
+
+        Finally, if ``multipage`` is set, then concatenate all generated files to
+        a multi-page PDF file, setting ``pagelabels`` accordingly, as well as PDF metadata
+        and bookmarks. Reference it with ``multipage`` as ID in the output fileGrp, too.
+        If ``multipage_only`` is also set, then remove the single-page PDF files afterwards.
         """
         assert len(input_files) == 2
         assert isinstance(input_files[0], get_args(OcrdFileType))
