@@ -7,6 +7,7 @@ import os.path
 from tempfile import TemporaryDirectory
 from logging import getLogger
 import subprocess
+import codecs
 
 from ocrd_models.constants import NAMESPACES as NS
 
@@ -102,6 +103,21 @@ def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
             file_ids.append(f.ID)
     return file_names, pagelabels, file_ids
 
+def pdfmark_string(string):
+    try:
+        _ = string.encode('ascii')
+        for c, escaped in [('\\', '\\\\'),
+                           ('(', '\\('),
+                           (')', '\\)'),
+                           ('\n', '\\n'),
+                           ('\t', '\\t')]:
+            string = string.replace(c, escaped)
+        return '({})'.format(string)
+    except UnicodeEncodeError:
+        bstring = codecs.BOM_UTF16_BE + string.encode('utf-16-be')
+        return '<{}>'.format(''.join('{:02X}'.format(byte)
+                                     for byte in bstring))
+
 def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None) -> str:
     pdfmarks = os.path.join(directory, 'pdfmarks.ps')
     with open(pdfmarks, 'w') as marks:
@@ -120,7 +136,7 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
                     /Nums [\n")
             for idx, pagelabel in enumerate(pagelabels):
                 #marks.write(f"1 << /S /D /St 10>>\n")
-                marks.write(f"{idx} << /P ({pagelabel}) >>\n")
+                marks.write(f"{idx} << /P {pdfmark_string(pagelabel)} >>\n")
             marks.write("] >> >> /PUT pdfmark")
     return pdfmarks
 
@@ -131,7 +147,7 @@ def pdfmerge(inputfiles: List[str], outputfile: str, pagelabels: Optional[List[s
     with TemporaryDirectory() as tmpdir:
         pdfmarks = create_pdfmarks(tmpdir, pagelabels, metadata)
         result = subprocess.run(
-            "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER "
+            "gs -q -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER "
             f"-sOutputFile={outputfile} {inputfiles} {pdfmarks}",
             shell=True, text=True, capture_output=True,
             # does not show stdout and stderr:
