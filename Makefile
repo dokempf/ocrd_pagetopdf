@@ -1,64 +1,37 @@
-PROJECT_NAME := ocrd_pagetopdf
-SCRIPTS = ocrd-pagetopdf
+PYTHON ?= python3
+PIP ?= pip3
+
+DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.0.4
 DOCKER_TAG = ocrd/pagetopdf
-
-PIP ?= $(shell which pip)
-
-# Directory to install to ('$(PREFIX)')
-PREFIX ?= $(if $(VIRTUAL_ENV),$(VIRTUAL_ENV),/usr/local)
-
-BINDIR = $(PREFIX)/bin
-SHAREDIR = $(PREFIX)/share/$(PROJECT_NAME)
-
-# BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu	Install system packages (on Debian/Ubuntu)"
-	@echo "    deps       	Install python packages"
-	@echo "    install    	Install the executable in $(PREFIX)/bin and the ocrd-tool.json to $(SHAREDIR)"
-	@echo "    uninstall  	Uninstall scripts and $(SHAREDIR)"
+	@echo "    deps-ubuntu	Install system dependencies (on Debian/Ubuntu)"
+	@echo "    deps       	Install Python dependencies via $(PIP)"
+	@echo "    install    	Install the Python package via $(PIP)"
+	@echo "    install-dev 	Install in editable mode"
+	@echo "    build 	Build source and binary distribution"
 	@echo "    docker     	Build Docker image"
-	@echo ""
-	@echo "  Variables"
-	@echo ""
-	@echo "    PREFIX  Directory to install to ('$(PREFIX)')"
-
-# END-EVAL
 
 # Install system packages (on Debian/Ubuntu)
 deps-ubuntu:
-	apt-get install -y python3 python3-venv default-jre-headless ghostscript
+	apt-get install -y python3 python3-venv default-jre-headless ghostscript git
 
 # Install python packages
 deps:
-	$(PIP) install ocrd # needed for ocrd CLI (and bashlib)
+	$(PIP) install -r requirements.txt
 
-# Install the executable in $(PREFIX)/bin and the ocrd-tool.json to $(SHAREDIR)
 install:
-	mkdir -p $(BINDIR)
-	for script in $(SCRIPTS);do \
-		sed 's,^SHAREDIR.*,SHAREDIR="$(SHAREDIR)",' $$script > $(BINDIR)/$$script ;\
-		chmod a+x $(BINDIR)/$$script ;\
-	done
-	mkdir -p $(SHAREDIR)
-	cp ocrd-tool.json $(SHAREDIR)
-	cp -r ptp $(SHAREDIR)
-ifeq ($(findstring $(BINDIR),$(subst :, ,$(PATH))),)
-	@echo "you need to add '$(BINDIR)' to your PATH"
-else
-	@echo "you already have '$(BINDIR)' in your PATH. good job."
-endif
+	$(PIP) install .
 
-# Uninstall scripts and $(SHAREDIR)
-uninstall:
-	for script in $(SCRIPTS);do \
-		rm --verbose --force "$(BINDIR)/$$script";\
-	done
-	rm -rfv $(SHAREDIR)
-	make -C ocr-pagetopdf PREFIX=$(PREFIX) uninstall
+install-dev:
+	$(PIP) install -e .
+
+build:
+	$(PIP) install build wheel
+	$(PYTHON) -m build .
 
 # Build Docker image
 docker:
@@ -67,3 +40,5 @@ docker:
 	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
 	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
 	-t $(DOCKER_TAG) .
+
+.PHONY: help deps-ubuntu deps install install-dev docker

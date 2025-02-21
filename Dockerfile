@@ -1,4 +1,5 @@
-FROM ocrd/core
+ARG DOCKER_BASE_IMAGE
+FROM $DOCKER_BASE_IMAGE
 
 ARG VCS_REF
 ARG BUILD_DATE
@@ -9,18 +10,18 @@ LABEL \
     org.label-schema.build-date=$BUILD_DATE
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV PREFIX=/usr/local
 
-RUN apt-get update && apt-get install -y openjdk-8-jdk-headless wget git gcc unzip
-
-WORKDIR /build
-COPY ptp ./ptp
-COPY ocrd-pagetopdf .
+WORKDIR /build/ocrd_pagetopdf
+COPY setup.py .
+COPY ocrd_pagetopdf ./ocrd_pagetopdf
 COPY ocrd-tool.json .
+COPY requirements.txt .
+COPY README.md .
 COPY Makefile .
-RUN make install PREFIX=/usr/local SHELL="bash -x"
+RUN make deps-ubuntu deps install \
+    && rm -fr /build/ocrd_pagetopdf
 
 WORKDIR /data
 ENV DEBIAN_FRONTEND teletype
-CMD ["/usr/local/bin/ocrd-pagetopdf", "--help"]
+VOLUME ["/data"]
 
