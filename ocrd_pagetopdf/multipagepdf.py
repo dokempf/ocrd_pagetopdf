@@ -9,7 +9,62 @@ from logging import getLogger
 import subprocess
 import codecs
 
+from lxml import etree
 from ocrd_models.constants import NAMESPACES as NS
+
+def get_structure(metsroot):
+    try:
+        structlink = next(metsroot.iterfind('.//mets:structLink', NS))
+        smlinks = {link.get('{http://www.w3.org/1999/xlink}from'):
+                   link.get('{http://www.w3.org/1999/xlink}to')
+                   for link in reversed(structlink.findall('./mets:smLink', NS))}
+        phymap = next(structmap for structmap in metsroot.iterfind('.//mets:structMap', NS)
+                      if structmap.get('TYPE') == 'PHYSICAL')
+        topdiv = next(phymap.iterfind('./mets:div', NS))
+        pages = {page.get('ID'): page.get('ORDER') or order
+                 for order, page in enumerate(topdiv.findall('./mets:div', NS))
+                 if page.get('TYPE') == "page"}
+        logmap = next(structmap for structmap in metsroot.iterfind('.//mets:structMap', NS)
+                      if structmap.get('TYPE') == 'LOGICAL')
+        topdiv = next(logmap.iterfind('./mets:div', NS))
+        # descend to deepest ADM
+        while topdiv.get('ADMID') is None:
+            topdiv = topdiv.find('./mets:div', NS)
+        # we want to dive into multivolume_work, periodical, newspaper, year, month...
+        # we are looking for issue, volume, monograph, lecture, dossier, act, judgement, study, paper, *_thesis, report, register, file, fragment, manuscript...
+        innerdiv = topdiv
+        while (topdiv.find('./mets:div', NS) is not None and
+               topdiv.find('./mets:div', NS).get('ADMID') is not None):
+            innerdiv = topdiv
+            topdiv = topdiv.find('./mets:div', NS)
+        #for div in innerdiv.iterdescendants('{%s}div' % NS['mets']):
+        def find_depth(div, depth=0):
+            return {
+                'label': div.get('LABEL') or div.get('ORDERLABEL'),
+                'type': div.get('TYPE'),
+                'id': div.get('ID'),
+                'page': pages.get(smlinks.get(div.get('ID'), ''), ''),
+                'depth': depth,
+                'subs': [find_depth(subdiv, depth+1) for subdiv in div.findall('./mets:div', NS)]
+            }
+        struct = find_depth(innerdiv)
+        return struct
+    except StopIteration:
+        return None
+
+def iso8601toiso32000(datestring):
+    date = datetime.fromisoformat(datestring)
+    offset = date.utcoffset()
+    tz_hours, tz_seconds = divmod(offset.seconds if offset else 0, 3600)
+    tz_minutes = tz_seconds // 60
+    datestring = date.strftime("%Y%m%d%H%M%S")
+    datestring += f"Z{tz_hours}'{tz_minutes}'"
+    return datestring
+
+def gettext(element):
+    if element is not None:
+        return element.text
+    return ""
 
 def get_metadata(mets):
     mets = mets._tree.getroot()
@@ -17,56 +72,51 @@ def get_metadata(mets):
     createdate = metshdr.attrib.get('CREATEDATE', '') if metshdr is not None else ''
     modifieddate = metshdr.attrib.get('LASTMODDATE', '') if metshdr is not None else ''
     creator = mets.xpath('.//mets:agent[@ROLE="CREATOR"]/mets:name', namespaces=NS)
+    creator = creator[0].text if len(creator) else ""
+    mods = mets.find('.//mods:mods', NS)
     titlestring = ""
-    titleinfos = mets.findall('.//mods:titleInfo', NS)
+    titleinfos = mods.findall('.//mods:titleInfo', NS)
     for titleinfo in titleinfos:
         if titleinfo.getparent().tag == "{%s}relatedItem" % NS['mods']:
             continue
-        title = titleinfo.find('.//mods:title', NS)
-        titlestring += title.text if title is not None else ""
-        for subtitle in titleinfo.findall('.//mods:subtitle', NS):
-            titlestring += " - " + subtitle.text if subtitle else ""
-        part = titleinfo.find('.//mods:partNumber', NS)
-        titlestring += " - " + part.text if part else ""
-        part = titleinfo.find('.//mods:partName', NS)
-        titlestring += " - " + part.text if part else ""
+        titlestring += " - ".join(gettext(titlepart)
+                                  for titlepart in (
+                                          [titleinfo.find('.//mods:title', NS)] +
+                                          titleinfo.findall('.//mods:subtitle', NS) +
+                                          [titleinfo.find('.//mods:partNumber', NS)] +
+                                          [titleinfo.find('.//mods:partName', NS)])
+                                  if titlepart is not None)
         break
-    author = (mets.xpath('.//mods:name[mods:role/text()="aut"]'
+    author = (mods.xpath('.//mods:name[mods:role/text()="aut"]'
                         '/mods:namePart[@type="family" or @type="given"]', namespaces=NS) +
-              mets.xpath('.//mods:name[mods:role/text()="cre"]'
+              mods.xpath('.//mods:name[mods:role/text()="cre"]'
                          '/mods:namePart[@type="family" or @type="given"]', namespaces=NS))
     author = next((part.text for part in author
                    if part.attrib["type"] == "given"), "") \
         + next((" " + part.text for part in author
                 if part.attrib["type"] == "family"), "")
-    origin = mets.find('.//mods:originInfo', NS)
+    publisher = publdate = digidate = ""
+    origin = mods.find('.//mods:originInfo', NS)
     if origin is not None:
-        publisher = origin.find('.//mods:publisher', NS)
-        publdate = origin.find('.//mods:dateIssued', NS)
-        digidate = origin.find('.//mods:dateCaptured', NS)
-    publisher = publisher.text + " (Publisher)" if publisher is not None else ""
-    publdate = publdate.text if publdate is not None else ""
-    digidate = digidate.text if digidate is not None else ""
-    def iso8601toiso32000(datestring):
-        date = datetime.fromisoformat(datestring)
-        offset = date.utcoffset()
-        tz_hours, tz_seconds = divmod(offset.seconds if offset else 0, 3600)
-        tz_minutes = tz_seconds // 60
-        datestring = date.strftime("%Y%m%d%H%M%S")
-        datestring += f"Z{tz_hours}'{tz_minutes}'"
-        return datestring
-    access = mets.find('.//mods:accessCondition', NS)
+        publisher = gettext(origin.find('.//mods:publisher', NS))
+        publdate = gettext(origin.find('.//mods:dateIssued', NS))
+        digidate = gettext(origin.find('.//mods:dateCaptured', NS))
+    keywords = publisher + " (Publisher)" if publisher else ""
+    access = gettext(mods.find('.//mods:accessCondition', NS))
     return {
         'Author': author,
         'Title': titlestring,
-        'Keywords': publisher,
-        'Description': "",
-        'Creator': creator[0].text if len(creator) else "",
+        'Keywords': keywords,
+        'Creator': creator,
         'Producer': __package__ + " v" + version(__package__),
         'Published': publdate,
-        # only via XMP: 'Access condition': access.text if access is not None else "",
+        'Digitized': digidate,
         'CreationDate': iso8601toiso32000(createdate) if createdate else "",
         'ModDate': iso8601toiso32000(modifieddate) if modifieddate else "",
+        # not part of DOCINFO:
+        'Perms': access,
+        'MODS': etree.tostring(mods, pretty_print=True, encoding="utf-8").decode("utf-8"),
+        'TOC': get_structure(mets)
     }
 
 def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
@@ -122,14 +172,41 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
     pdfmarks = os.path.join(directory, 'pdfmarks.ps')
     with open(pdfmarks, 'w') as marks:
         if metadata:
+            mods = metadata.pop("MODS", "")
+            toc = metadata.pop("TOC", None)
             marks.write("[ ")
             for metakey, metaval in metadata.items():
                 if metaval:
-                    marks.write(f"/{metakey} ({metaval})\n")
-            marks.write("/DOCINFO pdfmark\n")
-        # fixme: add XMP-embedded metadata:
-        # - DC (https://www.loc.gov/standards/mods/mods-dcsimple.html)
-        # - MODS-RDF (https://www.loc.gov/standards/mods/modsrdf/primer-2.html)
+                    marks.write(f"/{metakey} {pdfmark_string(metaval)}\n")
+            marks.write("/DOCINFO pdfmark\n\n")
+            if mods:
+                # add XMP-embedded metadata
+                # TODO (maybe): convert to other formats:
+                # - DC (https://www.loc.gov/standards/mods/mods-dcsimple.html)
+                # - MODS-RDF (https://www.loc.gov/standards/mods/modsrdf/primer-2.html)
+                marks.write("[ /_objdef {modsMetadata}\n")
+                marks.write("  /type /stream /OBJ pdfmark\n")
+                marks.write("[ {modsMetadata} <<\n")
+                marks.write("                 /Type /EmbeddedFile\n")
+                marks.write("                 /Subtype (text/xml) cvn\n")
+                marks.write("                 >> /PUT pdfmark\n")
+                marks.write("[ {modsMetadata} \n\n")
+                marks.write(pdfmark_string(mods))
+                marks.write("\n\n /PUT pdfmark\n\n")
+                marks.write("[ {modsMetadata} /CLOSE pdfmark\n")
+                marks.write("[ {modsMetadata} << /Type /Metadata /Subtype /XML >> /PUT pdfmark\n")
+                marks.write("[{Catalog} {modsMetadata} /Metadata pdfmark\n")
+            if toc:
+                def struct2bookmark(struct):
+                    subs = struct['subs']
+                    marks.write(f"[ /Title {pdfmark_string(struct['label'])}")
+                    marks.write(f" /Page {struct['page'] or 0}")
+                    if len(subs):
+                        marks.write(f" /Count {len(struct['subs'])}")
+                    marks.write(" /OUT pdfmark\n")
+                    for sub in subs:
+                        struct2bookmark(sub)
+                struct2bookmark(toc)
         if pagelabels:
             marks.write("[{Catalog} <<\n\
                     /PageLabels <<\n\
