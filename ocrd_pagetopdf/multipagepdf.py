@@ -39,13 +39,15 @@ def get_structure(metsroot):
             topdiv = topdiv.find('./mets:div', NS)
         #for div in innerdiv.iterdescendants('{%s}div' % NS['mets']):
         def find_depth(div, depth=0):
+            div_id = div.get('ID', div.getparent().get('ID'))
             return {
-                'label': div.get('LABEL') or div.get('ORDERLABEL'),
-                'type': div.get('TYPE'),
-                'id': div.get('ID'),
-                'page': pages.get(smlinks.get(div.get('ID'), ''), ''),
+                'label': div.get('LABEL') or div.get('ORDERLABEL') or '',
+                'type': div.get('TYPE') or '',
+                'id': div_id,
+                'page': pages.get(smlinks.get(div_id, ''), ''),
                 'depth': depth,
-                'subs': [find_depth(subdiv, depth+1) for subdiv in div.findall('./mets:div', NS)]
+                'subs': [find_depth(subdiv, depth+1)
+                         for subdiv in div.findall('./mets:div', NS)]
             }
         struct = find_depth(innerdiv)
         return struct
