@@ -115,8 +115,8 @@ def get_metadata(mets):
         'ModDate': iso8601toiso32000(modifieddate) if modifieddate else "",
         # not part of DOCINFO:
         'Perms': access,
-        'MODS': etree.tostring(mods, pretty_print=True, encoding="utf-8").decode("utf-8"),
-        'TOC': get_structure(mets)
+        'MODS': etree.tostring(mods, pretty_print=True).decode("ascii"),
+        'TOC': get_structure(mets),
     }
 
 def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
@@ -190,9 +190,9 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
                 marks.write("                 /Type /EmbeddedFile\n")
                 marks.write("                 /Subtype (text/xml) cvn\n")
                 marks.write("                 >> /PUT pdfmark\n")
-                marks.write("[ {modsMetadata} \n\n")
-                marks.write(pdfmark_string(mods))
-                marks.write("\n\n /PUT pdfmark\n\n")
+                marks.write("[ {modsMetadata} (\n\n")
+                marks.write(mods)
+                marks.write("\n\n) /PUT pdfmark\n\n")
                 marks.write("[ {modsMetadata} /CLOSE pdfmark\n")
                 marks.write("[ {modsMetadata} << /Type /Metadata /Subtype /XML >> /PUT pdfmark\n")
                 marks.write("[{Catalog} {modsMetadata} /Metadata pdfmark\n")
