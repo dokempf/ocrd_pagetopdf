@@ -79,24 +79,28 @@ class PAGE2PDF(Processor):
             if not output_file_path.lower().endswith('.pdf'):
                 output_file_path += '.pdf'
             self.logger.info("aggregating multi-page PDF to %s", output_file_path)
-            pdffiles, pagelabels, pdffile_ids = multipagepdf.read_from_mets(
-                workspace.mets, self.output_file_grp, self.page_id,
-                pagelabel=self.parameter['pagelabel']
-            )
-            if not pdffiles:
-                self.logger.warning("No single-page files, skipping multi-page output '%s'", output_file_path)
-                return
             if isinstance(workspace.mets, ClientSideOcrdMets):
                 # we cannot use METS Server for MODS queries
                 # instantiate (read and parse) METS from disk (read-only, metadata are constant)
                 ws = Workspace(workspace.resolver, workspace.directory,
                                mets_basename=os.path.basename(workspace.mets_target))
-                metadata = multipagepdf.get_metadata(ws.mets)
             else:
-                metadata = multipagepdf.get_metadata(workspace.mets)
+                ws = workspace
+            pages = ws.mets.get_physical_pages(for_pageIds=self.page_id, return_divs=True)
+            pdffiles, pagelabels, pdffile_ids = multipagepdf.read_from_mets(
+                workspace.mets, self.output_file_grp, self.page_id, pages,
+                pagelabel=self.parameter['pagelabel']
+            )
+            if not pdffiles:
+                self.logger.warning("No single-page files, skipping multi-page output '%s'", output_file_path)
+                return
+            metadata = multipagepdf.get_metadata(ws.mets)
+            structure = multipagepdf.get_structure(ws.mets)
             multipagepdf.pdfmerge(
                 pdffiles, output_file_path,
-                pagelabels=pagelabels, metadata=metadata,
+                metadata=metadata,
+                pagelabels=pagelabels,
+                structure=structure,
                 log=self.logger)
             workspace.add_file(
                 file_id=output_file_id,

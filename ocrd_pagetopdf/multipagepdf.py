@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from importlib.metadata import version
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Union, Optional
 import os.path
 from tempfile import TemporaryDirectory
 from logging import getLogger
@@ -12,7 +12,8 @@ import codecs
 from lxml import etree
 from ocrd_models.constants import NAMESPACES as NS
 
-def get_structure(metsroot):
+def get_structure(mets):
+    metsroot = mets._tree.getroot()
     try:
         structlink = next(metsroot.iterfind('.//mets:structLink', NS))
         smlinks = {link.get('{http://www.w3.org/1999/xlink}from'):
@@ -118,15 +119,12 @@ def get_metadata(mets):
         # not part of DOCINFO:
         'Perms': access,
         'MODS': etree.tostring(mods, pretty_print=True).decode("ascii"),
-        'TOC': get_structure(mets),
     }
 
-def read_from_mets(mets, filegrp, page_ids, pagelabel='pageId'):
+def read_from_mets(mets, filegrp, page_ids, pages, pagelabel='pageId'):
     file_names = []
     pagelabels = []
     file_ids = []
-    if pagelabel == "pagelabel":
-        pages = mets.get_physical_pages(for_pageIds=page_ids, return_divs=True)
     for f in mets.find_files(mimetype='application/pdf', fileGrp=filegrp, pageId=page_ids or None):
         # ignore existing multipage PDFs
         if f.pageId:
@@ -170,12 +168,15 @@ def pdfmark_string(string):
         return '<{}>'.format(''.join('{:02X}'.format(byte)
                                      for byte in bstring))
 
-def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None) -> str:
+def create_pdfmarks(directory: str,
+                    metadata: Dict[str,str] = None,
+                    pagelabels: Optional[List[str]] = None,
+                    structure: Optional[Dict[str,Union[str,list]]] = None
+) -> str:
     pdfmarks = os.path.join(directory, 'pdfmarks.ps')
     with open(pdfmarks, 'w') as marks:
         if metadata:
             mods = metadata.pop("MODS", "")
-            toc = metadata.pop("TOC", None)
             marks.write("[ ")
             for metakey, metaval in metadata.items():
                 if metaval:
@@ -198,17 +199,17 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
                 marks.write("[ {modsMetadata} /CLOSE pdfmark\n")
                 marks.write("[ {modsMetadata} << /Type /Metadata /Subtype /XML >> /PUT pdfmark\n")
                 marks.write("[{Catalog} {modsMetadata} /Metadata pdfmark\n")
-            if toc:
-                def struct2bookmark(struct):
-                    subs = struct['subs']
-                    marks.write(f"[ /Title {pdfmark_string(struct['label'])}")
-                    marks.write(f" /Page {struct['page'] or 0}")
-                    if len(subs):
-                        marks.write(f" /Count {len(struct['subs'])}")
-                    marks.write(" /OUT pdfmark\n")
-                    for sub in subs:
-                        struct2bookmark(sub)
-                struct2bookmark(toc)
+        if structure:
+            def struct2bookmark(struct):
+                subs = struct['subs']
+                marks.write(f"[ /Title {pdfmark_string(struct['label'])}")
+                marks.write(f" /Page {struct['page'] or 0}")
+                if len(subs):
+                    marks.write(f" /Count {len(struct['subs'])}")
+                marks.write(" /OUT pdfmark\n")
+                for sub in subs:
+                    struct2bookmark(sub)
+            struct2bookmark(structure)
         if pagelabels:
             marks.write("[{Catalog} <<\n\
                     /PageLabels <<\n\
@@ -219,12 +220,18 @@ def create_pdfmarks(directory: str, pagelabels: Optional[List[str]] = None, meta
             marks.write("] >> >> /PUT pdfmark")
     return pdfmarks
 
-def pdfmerge(inputfiles: List[str], outputfile: str, pagelabels: Optional[List[str]] = None, metadata: Dict[str,str] = None, log=None) -> None:
+def pdfmerge(inputfiles: List[str],
+             outputfile: str,
+             metadata: Dict[str,str] = None,
+             pagelabels: Optional[List[str]] = None,
+             structure: Optional[Dict[str,Union[str,list]]] = None,
+             log=None,
+) -> None:
     if log is None:
         log = getLogger('ocrd.processor.pagetopdf')
     inputfiles = ' '.join(inputfiles)
     with TemporaryDirectory() as tmpdir:
-        pdfmarks = create_pdfmarks(tmpdir, pagelabels, metadata)
+        pdfmarks = create_pdfmarks(tmpdir, metadata, pagelabels, structure)
         result = subprocess.run(
             "gs -q -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER "
             f"-sOutputFile={outputfile} {inputfiles} {pdfmarks}",
