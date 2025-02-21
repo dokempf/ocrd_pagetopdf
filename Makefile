@@ -33,6 +33,28 @@ build:
 	$(PIP) install build wheel
 	$(PYTHON) -m build .
 
+# Run test
+test: tests/assets
+	$(PYTHON) -m pytest  tests --durations=0 $(PYTEST_ARGS)
+
+#
+# Assets
+#
+
+# Update OCR-D/assets submodule
+.PHONY: repos always-update tests/assets
+repo/assets: always-update
+	git submodule sync --recursive $@
+	if git submodule status --recursive $@ | grep -qv '^ '; then \
+		git submodule update --init --recursive $@ && \
+		touch $@; \
+	fi
+
+# Setup test assets
+tests/assets: repo/assets
+	mkdir -p tests/assets
+	cp -a repo/assets/data/* tests/assets
+
 # Build Docker image
 docker:
 	docker build \

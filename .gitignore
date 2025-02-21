@@ -50,3 +50,6 @@ coverage.xml
 
 # emacs bkup
 *~
+
+# temporary clone of assets
+tests/assets/
