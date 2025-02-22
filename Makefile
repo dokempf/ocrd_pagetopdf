@@ -14,6 +14,15 @@ help:
 	@echo "    install-dev 	Install in editable mode"
 	@echo "    build 	Build source and binary distribution"
 	@echo "    docker     	Build Docker image"
+	@echo "    test         Run tests via Pytest"
+	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
+	@echo "    tests/assets Setup test assets"
+	@echo ""
+	@echo "  Variables"
+	@echo ""
+	@echo "    DOCKER_TAG  Docker container tag ($(DOCKER_TAG))"
+	@echo "    PYTEST_ARGS Additional runtime options for pytest ($(PYTEST_ARGS))"
+	@echo "                (See --help, esp. custom option --workspace)"
 
 # Install system packages (on Debian/Ubuntu)
 deps-ubuntu:
@@ -33,6 +42,8 @@ build:
 	$(PIP) install build wheel
 	$(PYTHON) -m build .
 
+# TODO: once core#1149 is fixed, remove this line (so the local copy can be used)
+test: export OCRD_BASEURL=https://github.com/OCR-D/assets/raw/refs/heads/master/data/
 # Run test
 test: tests/assets
 	$(PYTHON) -m pytest  tests --durations=0 $(PYTEST_ARGS)
