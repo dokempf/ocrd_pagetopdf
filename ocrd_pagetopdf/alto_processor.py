@@ -62,7 +62,9 @@ class ALTO2PDF(PAGE2PDF):
         assert input_files[0].mimetype in ['application/alto+xml', 'text/xml']
         assert input_files[1].mimetype.startswith('image/')
         alto_file = input_files[0]
+        assert os.path.exists(alto_file.local_filename)
         image_file = input_files[1]
+        assert os.path.exists(image_file.local_filename)
         page_id = alto_file.pageId
         self._base_logger.info("processing page %s", page_id)
         output_file_id = make_file_id(alto_file, self.output_file_grp)
@@ -80,13 +82,21 @@ class ALTO2PDF(PAGE2PDF):
             copyfile(alto_file.local_filename, alto_path)
             page_path = os.path.join(tmpdir, "page.xml")
             converter2 = ' '.join(self.cliparams2 + ["-source-xml", alto_path, "-target-xml", page_path])
+            self.logger.debug("Running command: '%s'", converter2)
             result = subprocess.run(converter2, shell=True, text=True, capture_output=True,
                                     # does not show stdout and stderr:
                                     #check=True,
                                     encoding="utf-8")
+            # logging commented as long as prima-page-converter#19 is not fixed
+            # if result.stdout:
+            #     self.logger.debug("PageConverter for %s stdout: %s", page_id, result.stdout)
+            # if result.stderr:
+            #     self.logger.warning("PageConverter for %s stderr: %s", page_id, result.stderr)
             if result.returncode != 0:
+                self.logger.warning("PageConverter for %s stderr: %s", page_id, result.stderr)
                 raise Exception("PageConverter command failed", result)
             if not os.path.exists(page_path) or not os.path.getsize(page_path):
+                self.logger.warning("PageConverter for %s stderr: %s", page_id, result.stderr)
                 raise Exception("PageConverter result is empty", result)
             img_path = os.path.join(tmpdir, "image.png")
             copyfile(image_file.local_filename, img_path)
