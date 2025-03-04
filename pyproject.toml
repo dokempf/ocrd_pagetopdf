@@ -35,12 +35,20 @@ ocrd-altotopdf = "ocrd_pagetopdf.cli:ocrd_altotopdf"
 Homepage = "https://github.com/UB-Mannheim/ocrd_pagetopdf"
 Repository = "https://github.com/UB-Mannheim/ocrd_pagetopdf.git"
 
+[tool.setuptools]
+# It is not possible anymore to use autodiscovery, because other directories
+# (repo/) will abort flat-layout detection.
+# However, neither is it possible to use packages.find (with include/exclude),
+# because it fails to accept pure data directories (lib/, data/).
+# Hence this clumsy manual enumeration:
+packages = ["ocrd_pagetopdf", "ocrd_pagetopdf.lib", "ocrd_pagetopdf.data"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.package-data]
-"*" = ["PageToPdf.jar", "*.ttf", "*.txt", "*.otf", "ocrd-tool.json"]
+"*" = ["PageToPdf.jar", "*.txt", "ocrd-tool.json"]
+"ocrd_pagetopdf.data" = ["*.ttf", "*.otf"]
 "ocrd_pagetopdf.lib" = ["*.jar"]
 
 [tool.mypy]
