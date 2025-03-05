@@ -2,8 +2,8 @@
 
 > OCR-D wrapper for prima-page-to-pdf
 
-[![Python CI](https://github.com/UB-Mannheim/ocrd_pagetopdf/actions/workflows/ci.yml/badge.svg)](https://github.com/UB-Mannheim/ocrd_pagetopdf/actions/workflows/ci.yml)
-[![Docker CD](https://github.com/UB-Mannheim/ocrd_pagetopdf/actions/workflows/docker.yml/badge.svg)](https://github.com/UB-Mannheim/ocrd_pagetopdf/actions/workflows/docker.yml)
+[![Python CI](https://github.com/OCR-D/ocrd_pagetopdf/actions/workflows/ci.yml/badge.svg)](https://github.com/OCR-D/ocrd_pagetopdf/actions/workflows/ci.yml)
+[![Docker CD](https://github.com/OCR-D/ocrd_pagetopdf/actions/workflows/docker.yml/badge.svg)](https://github.com/OCR-D/ocrd_pagetopdf/actions/workflows/docker.yml)
 [![PyPI CD](https://img.shields.io/pypi/v/ocrd-pagetopdf.svg)](https://pypi.org/project/ocrd-pagetopdf/)
 
 Contents:

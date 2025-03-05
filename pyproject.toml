@@ -32,8 +32,8 @@ ocrd-pagetopdf = "ocrd_pagetopdf.cli:ocrd_pagetopdf"
 ocrd-altotopdf = "ocrd_pagetopdf.cli:ocrd_altotopdf"
 
 [project.urls]
-Homepage = "https://github.com/UB-Mannheim/ocrd_pagetopdf"
-Repository = "https://github.com/UB-Mannheim/ocrd_pagetopdf.git"
+Homepage = "https://github.com/OCR-D/ocrd_pagetopdf"
+Repository = "https://github.com/OCR-D/ocrd_pagetopdf.git"
 
 [tool.setuptools]
 # It is not possible anymore to use autodiscovery, because other directories

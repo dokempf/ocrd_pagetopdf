@@ -6,7 +6,7 @@ ARG BUILD_DATE
 LABEL \
     maintainer="https://ocr-d.de/kontakt" \
     org.label-schema.vcs-ref=$VCS_REF \
-    org.label-schema.vcs-url="https://github.com/UB-Mannheim/ocrd_pagetopdf" \
+    org.label-schema.vcs-url="https://github.com/OCR-D/ocrd_pagetopdf" \
     org.label-schema.build-date=$BUILD_DATE
 
 ENV DEBIAN_FRONTEND noninteractive
