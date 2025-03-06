@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PIP ?= pip3
 
-DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.0.4
+DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.1.0
 DOCKER_TAG = ocrd/pagetopdf
 
 help:
