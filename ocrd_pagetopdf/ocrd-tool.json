@@ -10,7 +10,7 @@
         "Long-term preservation"
       ],
       "steps": [
-        "postprocessing/format-conversion"
+        "post-processing/format-conversion"
       ],
       "input_file_grp_cardinality": 1,
       "output_file_grp_cardinality": 1,
@@ -29,8 +29,8 @@
           "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
           "type": "string",
           "format": "uri",
-          "content-type": "application/x-font-ttf",
-          "default": ""
+          "content-type": "application/x-font-*,application/font-*,font/*",
+          "default": "data/AletheiaSans.ttf"
         },
        "outlines": {
           "description": "What segment hierarchy to draw coordinate outlines for. If unset, no outlines are drawn.",
@@ -197,17 +197,17 @@
         "Long-term preservation"
       ],
       "steps": [
-        "postprocessing/format-conversion"
+        "post-processing/format-conversion"
       ],
       "input_file_grp_cardinality": 2,
       "output_file_grp_cardinality": 1,
       "parameters": {
         "font": {
-          "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
+          "description": "Font file to be used in PDF file. (Make sure to pick a font which covers all glyphs!)",
           "type": "string",
           "format": "uri",
-          "content-type": "application/x-font-ttf",
-          "default": ""
+          "content-type": "application/x-font-*,application/font-*,font/*",
+          "default": "data/AletheiaSans.ttf"
         },
        "outlines": {
           "description": "What segment hierarchy to draw coordinate outlines for. If unset, no outlines are drawn.",
