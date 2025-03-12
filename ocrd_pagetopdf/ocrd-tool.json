@@ -1,0 +1,279 @@
+{
+  "version": "0.1.0",
+  "git_url": "https://github.com/UB-Mannheim/ocrd_pagetopdf",
+  "dockerhub": "ocrd/pagetopdf",
+  "tools": {
+    "ocrd-pagetopdf": {
+      "executable": "ocrd-pagetopdf",
+      "description": "Convert text and layout annotations from PAGE to PDF format (overlaying original image with text layer and polygon outlines)",
+      "categories": [
+        "Long-term preservation"
+      ],
+      "steps": [
+        "post-processing/format-conversion"
+      ],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
+      "parameters": {
+        "image_feature_selector": {
+          "type": "string",
+          "default": "",
+          "description": "comma-separated list of required image features (e.g. binarized,despeckled,cropped,deskewed,rotated-90)"
+        },
+        "image_feature_filter": {
+          "type": "string",
+          "default": "",
+          "description": "comma-separated list of forbidden image features (e.g. binarized,despeckled,cropped,deskewed,rotated-90)"
+        },
+        "font": {
+          "description": "Font file to be used in PDF file. If unset, AletheiaSans.ttf is used. (Make sure to pick a font which covers all glyphs!)",
+          "type": "string",
+          "format": "uri",
+          "content-type": "application/x-font-*,application/font-*,font/*",
+          "default": "data/AletheiaSans.ttf"
+        },
+       "outlines": {
+          "description": "What segment hierarchy to draw coordinate outlines for. If unset, no outlines are drawn.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "textequiv_level": {
+          "description": "What segment hierarchy level to render text output from. If unset, no text is rendered.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "negative2zero": {
+          "description": "Repair invalid or inconsistent coordinates before trying to convert.",
+          "type": "boolean",
+          "default": false
+        },
+        "ext": {
+          "description": "Output filename extension",
+          "type": "string",
+          "default": ".pdf"
+        },
+        "multipage": {
+          "description": "Merge all PDFs into one multipage file. The value is used as METS file ID and file basename for the PDF.",
+          "type": "string",
+          "default": ""
+        },
+        "multipage_only": {
+          "description": "When producing a `multipage`, do not add single-page files into the output fileGrp (but use a temporary directory for them).",
+          "type": "boolean",
+          "default": false
+        },
+        "pagelabel": {
+          "description": "Parameter for 'multipage': Set the labels used as page outlines.\n\n - 'pageId': physical page ID,\n\n - 'pagenumber': use consecutive numbers,\n\n - 'pagelabel': use '@ORDERLABEL - @LABEL',\n\n - 'basename': use the name of the input file,\n\n - 'local_filename': use the href relative path of the input file,\n\n - 'url': use the href URL of the input file,\n\n - 'ID': use the file ID of the input file",
+          "type": "string",
+          "default": "pageId",
+            "enum": [
+              "pagenumber",
+              "pagelabel",
+              "pageId",
+              "basename",
+              "basename_without_extension",
+              "local_filename",
+              "ID",
+              "url"
+            ]
+        },
+        "script-args": {
+          "description": "Extra arguments to PageToPdf (see https://github.com/PRImA-Research-Lab/prima-page-to-pdf)",
+          "type": "string",
+          "default": ""
+        }
+      },
+      "resources": [
+        {
+          "url": "https://github.com/OCR-D/ocrd_vandalize/blob/main/ocrd_vandalize/UnifrakturMaguntia.ttf",
+          "name": "UnifrakturMaguntia.ttf",
+          "description": "Unicode-aware Fraktur font (based on Peter Wiegel's font Berthold Mainzer Fraktur which is in turn based on a 1901 typeface by Carl Albert Fahrenwaldt, cf. https://unifraktur.sourceforge.net/maguntia.html)",
+          "size": 257648
+        },
+        {
+          "url": "https://github.com/Layout-Parser/layout-parser/blob/main/src/layoutparser/misc/NotoSerifCJKjp-Regular.otf",
+          "name": "NotoSerifCJKjp-Regular.otf",
+          "description": "font with wide CJK support",
+          "size": 23607780
+        },
+        {
+          "url": "https://github.com/OCR4all/LAREX/blob/master/src/main/webapp/resources/fonts/AndronScriptorWeb.ttf",
+          "name": "AndronScriptorWeb.ttf",
+          "description": "Unicode MUFI Renaissance font (special edition of Andreas Stötzner’s Andron font project, issued to support scholarly editing purposes for medieval philological studies, cf. https://skaldic.org/m.php?p=doc&i=968)",
+          "size": 940752
+        },
+        {
+          "url": "https://sourceforge.net/projects/junicode/files/junicode/junicode-1.002/junicode-1.002.zip/download",
+          "name": "Junicode.ttf",
+          "type": "archive",
+          "path_in_archive": "Junicode.ttf",
+          "description": "Unicode MUFI font (short for Junius-Unicode) for medievalists with extensive coverage of the Latin Unicode ranges, plus Runic and Gothic (cf. https://junicode.sourceforge.io)",
+          "size": 1451694
+        },
+        {
+          "url": "https://sourceforge.net/projects/junicode/files/junicode/junicode-1.002/junicode-1.002.zip/download",
+          "name": "FoulisGreek.ttf",
+          "type": "archive",
+          "path_in_archive": "FoulisGreek.ttf",
+          "description": "Unicode MUFI font (short for Junius-Unicode) for medievalists with extensive coverage of the Greek Unicode ranges (cf. https://junicode.sourceforge.io)",
+          "size": 1451694
+        },
+        {
+          "url": "https://github.com/google/fonts/raw/refs/heads/main/apache/tinos/Tinos-Regular.ttf",
+          "name": "Tinos-Regular.ttf",
+          "description": "designed by Steve Matteson, serif design that is metrically compatible with Times New Roman. Tinos offers improved on-screen readability characteristics and the pan-European WGL character set (Cyrillic, Greek, Hebrew, Latin, Vietnamese) and solves the needs of developers looking for width-compatible fonts to address document portability across platforms (cf. https://github.com/googlefonts/tinos)",
+          "size": 475996
+        },
+        {
+          "url": "https://github.com/google/fonts/blob/refs/heads/main/apache/arimo/Arimo%5Bwght%5D.ttf",
+          "name": "Arimo.ttf",
+          "description": "designed by Steve Matteson, serif design that is metrically compatible with Arial. Arimo offers improved on-screen readability characteristics and the pan-European WGL character set (Cyrillic, Greek, Hebrew, Latin, Vietnamese) and solves the needs of developers looking for width-compatible fonts to address document portability across platforms (cf. https://github.com/googlefonts/arimo)",
+          "size": 231983
+        },
+        {
+          "url": "https://www.ligafaktur.de/LUC.UnicodeFrakturU1A.otf",
+          "name": "LUC.UnicodeFrakturU1A.otf",
+          "description": "Unicode Fraktur, fully manual Fraktursatz (all ligatures available via MUFI/UNZ1 codepoint), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 146080
+        },
+        {
+          "url": "https://www.ligafaktur.de/LOB.UnicodeFraktur.otf",
+          "name": "LOB.UnicodeFraktur.otf",
+          "description": "Unicode Fraktur, partly automatic Fraktursatz (all ligatures selected automatically unless suppressed via zero-width non-joiner, ſ only via extra codepoint), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 150520
+        },
+        {
+          "url": "https://www.ligafaktur.de/LOV.UnicodeFraktur.otf",
+          "name": "LOV.UnicodeFraktur.otf",
+          "description": "Unicode Fraktur, fully automatic Fraktursatz (all ligatures selected automatically unless suppressed via zero-width non-joiner, ſ selected automatically), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 221224
+        },
+        {
+          "url": "https://www.ligafaktur.de/LUC.NeueDeutscheKurrent.zip",
+          "name": "LUC.NeueDeutscheKurrentU1T.otf",
+          "type": "archive",
+          "path_in_archive": "LUC.NeueDeutscheKurrentU1T#.otf",
+          "description": "Kurrent German cursive, fully manual Fraktursatz (all ligatures available via MUFI/UNZ1 codepoint), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 27863
+        },
+        {
+          "url": "https://www.ligafaktur.de/LOB.NeueDeutscheKurrent.otf",
+          "name": "LOB.NeueDeutscheKurrent.otf",
+          "description": "Kurrent German cursive, partly automatic Fraktursatz (all ligatures selected automatically unless suppressed via zero-width non-joiner, ſ only via extra codepoint), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 47696
+        },
+        {
+          "url": "https://www.ligafaktur.de/LOV.NeueDeutscheKurrent.otf",
+          "name": "LOV.NeueDeutscheKurrent.otf",
+          "description": "Kurrent German cursive, fully automatic Fraktursatz (all ligatures selected automatically unless suppressed via zero-width non-joiner, ſ selected automatically), by Ulrich Zeidler (cf. https://www.ligafaktur.de)",
+          "size": 105184
+        },
+        {
+          "url": "https://www.zinken.net/Fonts/DeutscheKurrent.ttf",
+          "name": "DeutscheKurrent.ttf",
+          "description": "Kurrent German cursive, automatic Fraktursatz (ligatures and ſ solely via OpenType features, no extra codepoints), by Hans Zinken (cf. https://www.zinken.net/Fonts/Kurrent.html)",
+          "size": 80032
+        }
+      ]
+    },
+    "ocrd-altotopdf": {
+      "executable": "ocrd-altotopdf",
+      "description": "Convert text and layout annotations from ALTO to PDF format (overlaying original image with text layer and polygon outlines)",
+      "categories": [
+        "Long-term preservation"
+      ],
+      "steps": [
+        "post-processing/format-conversion"
+      ],
+      "input_file_grp_cardinality": 2,
+      "output_file_grp_cardinality": 1,
+      "parameters": {
+        "font": {
+          "description": "Font file to be used in PDF file. (Make sure to pick a font which covers all glyphs!)",
+          "type": "string",
+          "format": "uri",
+          "content-type": "application/x-font-*,application/font-*,font/*",
+          "default": "data/AletheiaSans.ttf"
+        },
+       "outlines": {
+          "description": "What segment hierarchy to draw coordinate outlines for. If unset, no outlines are drawn.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "textequiv_level": {
+          "description": "What segment hierarchy level to render text output from. If unset, no text is rendered.",
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "region",
+            "line",
+            "word",
+            "glyph"
+          ]
+        },
+        "negative2zero": {
+          "description": "Repair invalid or inconsistent coordinates before trying to convert.",
+          "type": "boolean",
+          "default": false
+        },
+        "ext": {
+          "description": "Output filename extension",
+          "type": "string",
+          "default": ".pdf"
+        },
+        "multipage": {
+          "description": "Merge all PDFs into one multipage file. The value is used as METS file ID and file basename for the PDF.",
+          "type": "string",
+          "default": ""
+        },
+        "multipage_only": {
+          "description": "When producing a `multipage`, do not add single-page files into the output fileGrp (but use a temporary directory for them).",
+          "type": "boolean",
+          "default": false
+        },
+        "pagelabel": {
+          "description": "Parameter for 'multipage': Set the labels used as page outlines.\n\n - 'pageId': physical page ID,\n\n - 'pagenumber': use consecutive numbers,\n\n - 'pagelabel': use '@ORDERLABEL - @LABEL',\n\n - 'basename': use the name of the input file,\n\n - 'local_filename': use the href relative path of the input file,\n\n - 'url': use the href URL of the input file,\n\n - 'ID': use the file ID of the input file",
+          "type": "string",
+          "default": "pageId",
+            "enum": [
+              "pagenumber",
+              "pagelabel",
+              "pageId",
+              "basename",
+              "basename_without_extension",
+              "local_filename",
+              "ID",
+              "url"
+            ]
+        },
+        "script-args": {
+          "description": "Extra arguments to PageToPdf (see https://github.com/PRImA-Research-Lab/prima-page-to-pdf)",
+          "type": "string",
+          "default": ""
+        }
+      }
+    }
+  }
+}
