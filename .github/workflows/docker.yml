@@ -11,6 +11,7 @@ on:
 
 env:
   DOCKER_TAGNAME: ${{ github.evenv.inputs.docker-tagname || 'ocrd/pagetopdf' }}
+  REPO_NAME: ${{ github.repository }}
 
 jobs:
 
@@ -35,8 +36,10 @@ jobs:
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
     - name: Push image to Dockerhub
       run: docker push ${{ env.DOCKER_TAGNAME }}
+    - name: define image name from repo name
+      run: echo "IMAGE_NAME=ghcr.io/${REPO_NAME,,}" >> $GITHUB_ENV
     - name: Alias the Docker image for GHCR
-      run: docker tag ${{ env.DOCKER_TAGNAME }} ghcr.io/${{ github.repository }}
+      run: docker tag ${{ env.DOCKER_TAGNAME }} ${{ env.IMAGE_NAME }}
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
       with:
@@ -44,4 +47,4 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Push image to Github Container Registry
-      run: docker push ghcr.io/${{ github.repository }}
+      run: docker push ${{ env.IMAGE_NAME }}
