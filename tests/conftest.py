@@ -4,10 +4,18 @@ from multiprocessing import Process
 from time import sleep
 from random import seed, sample
 import os
+import logging
 import pytest
 
 from ocrd import Resolver, Workspace, OcrdMetsServer
-from ocrd_utils import pushd_popd, disableLogging, initLogging, setOverrideLogLevel, config
+from ocrd_utils import (
+    pushd_popd,
+    disableLogging,
+    initLogging,
+    getLogger,
+    setOverrideLogLevel,
+    config
+)
 
 from .assets import assets
 
@@ -41,8 +49,9 @@ WORKSPACES = {
 @pytest.fixture
 def workspace(tmpdir, pytestconfig, asset):
     initLogging()
-    if pytestconfig.getoption('verbose') > 0:
-        setOverrideLogLevel('DEBUG')
+    getLogger('ocrd.processor').setLevel(logging.DEBUG)
+    #if pytestconfig.getoption('verbose') > 0:
+    #    setOverrideLogLevel('DEBUG')
     with pushd_popd(tmpdir):
         directory = str(tmpdir)
         resolver = Resolver()
