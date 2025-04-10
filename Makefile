@@ -1,7 +1,8 @@
 PYTHON ?= python3
 PIP ?= pip3
+PYTEST_ARGS ?= -vv
 
-DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.1.0
+DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.3.0
 DOCKER_TAG = ocrd/pagetopdf
 
 help:
@@ -10,6 +11,7 @@ help:
 	@echo ""
 	@echo "    deps-ubuntu	Install system dependencies (on Debian/Ubuntu)"
 	@echo "    deps       	Install Python dependencies via $(PIP)"
+	@echo "    deps-test  	Install Python deps for test via $(PIP)"
 	@echo "    install    	Install the Python package via $(PIP)"
 	@echo "    install-dev 	Install in editable mode"
 	@echo "    build 	Build source and binary distribution"
@@ -26,11 +28,15 @@ help:
 
 # Install system packages (on Debian/Ubuntu)
 deps-ubuntu:
-	apt-get install -y python3 python3-venv default-jre-headless ghostscript git
+	apt-get update && apt-get install -y --no-install-recommends \
+		python3 python3-venv default-jre-headless ghostscript git
 
 # Install python packages
 deps:
 	$(PIP) install -r requirements.txt
+
+deps-test:
+	$(PIP) install -r requirements-test.txt
 
 install:
 	$(PIP) install .
@@ -74,4 +80,4 @@ docker:
 	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
 	-t $(DOCKER_TAG) .
 
-.PHONY: help deps-ubuntu deps install install-dev docker
+.PHONY: help deps-ubuntu deps deps-test install install-dev build docker

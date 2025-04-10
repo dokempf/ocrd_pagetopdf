@@ -29,8 +29,9 @@ ENV XDG_CONFIG_HOME /usr/local/share/ocrd-resources
 
 WORKDIR /build/ocrd_pagetopdf
 COPY . .
+COPY ocrd-tool.json .
 # prepackage ocrd-tool.json as ocrd-all-tool.json
-RUN ocrd ocrd-tool ocrd_pagetopdf/ocrd-tool.json dump-tools > $(dirname $(ocrd bashlib filename))/ocrd-all-tool.json
+RUN ocrd ocrd-tool ocrd-tool.json dump-tools > $(dirname $(ocrd bashlib filename))/ocrd-all-tool.json
 # install everything and reduce image size
 RUN make deps-ubuntu deps install \
     && rm -fr /build/ocrd_pagetopdf

@@ -35,13 +35,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo make deps-ubuntu
-          make deps
+          make deps deps-test
       - name: Install package
         run: |
           python3 --version
           make install
           pip check
       - name: Run tests
-        run: |
-          pip install pytest
-          make test
+        run: make test

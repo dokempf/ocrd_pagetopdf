@@ -45,6 +45,7 @@ packages = ["ocrd_pagetopdf", "ocrd_pagetopdf.lib", "ocrd_pagetopdf.data"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+optional-dependencies.test = {file = ["requirements-test.txt"]}
 
 [tool.setuptools.package-data]
 "*" = ["PageToPdf.jar", "*.txt", "ocrd-tool.json"]
