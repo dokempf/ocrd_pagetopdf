@@ -14,46 +14,48 @@ from ocrd_models.constants import NAMESPACES as NS
 
 def get_structure(mets):
     metsroot = mets._tree.getroot()
+    structlink = metsroot.find('.//mets:structLink', NS)
+    smlinks = {link.get('{http://www.w3.org/1999/xlink}from'):
+               link.get('{http://www.w3.org/1999/xlink}to')
+               for link in reversed(structlink.findall('./mets:smLink', NS)
+                                    if structlink is not None else [])}
+    phymap = metsroot.find('mets:structMap[@TYPE="PHYSICAL"]', NS)
     try:
-        structlink = next(metsroot.iterfind('.//mets:structLink', NS))
-        smlinks = {link.get('{http://www.w3.org/1999/xlink}from'):
-                   link.get('{http://www.w3.org/1999/xlink}to')
-                   for link in reversed(structlink.findall('./mets:smLink', NS))}
-        phymap = next(structmap for structmap in metsroot.iterfind('.//mets:structMap', NS)
-                      if structmap.get('TYPE') == 'PHYSICAL')
         topdiv = next(phymap.iterfind('./mets:div', NS))
-        pages = {page.get('ID'): page.get('ORDER') or order
-                 for order, page in enumerate(topdiv.findall('./mets:div', NS))
-                 if page.get('TYPE') == "page"}
-        logmap = next(structmap for structmap in metsroot.iterfind('.//mets:structMap', NS)
-                      if structmap.get('TYPE') == 'LOGICAL')
-        topdiv = next(logmap.iterfind('./mets:div', NS))
-        # descend to deepest ADM
-        while topdiv.get('ADMID') is None:
-            topdiv = topdiv.find('./mets:div', NS)
-        # we want to dive into multivolume_work, periodical, newspaper, year, month...
-        # we are looking for issue, volume, monograph, lecture, dossier, act, judgement, study, paper, *_thesis, report, register, file, fragment, manuscript...
-        innerdiv = topdiv
-        while (topdiv.find('./mets:div', NS) is not None and
-               topdiv.find('./mets:div', NS).get('ADMID') is not None):
-            innerdiv = topdiv
-            topdiv = topdiv.find('./mets:div', NS)
-        #for div in innerdiv.iterdescendants('{%s}div' % NS['mets']):
-        def find_depth(div, depth=0):
-            div_id = div.get('ID', div.getparent().get('ID'))
-            return {
-                'label': div.get('LABEL') or div.get('ORDERLABEL') or '',
-                'type': div.get('TYPE') or '',
-                'id': div_id,
-                'page': pages.get(smlinks.get(div_id, ''), ''),
-                'depth': depth,
-                'subs': [find_depth(subdiv, depth+1)
-                         for subdiv in div.findall('./mets:div', NS)]
-            }
-        struct = find_depth(innerdiv)
-        return struct
     except StopIteration:
         return None
+    pages = {page.get('ID'): page.get('ORDER') or order
+             for order, page in enumerate(topdiv.findall('./mets:div', NS))
+             if page.get('TYPE') == "page"}
+    logmap = metsroot.find('mets:structMap[@TYPE="LOGICAL"]', NS)
+    if logmap is None:
+        return None
+    if (topdiv := logmap.find('./mets:div', NS)) is None:
+        return None
+    # descend to deepest ADM
+    while (topdiv.get('ADMID') is None and
+           (div := topdiv.find('./mets:div', NS)) is not None):
+        topdiv = div
+    # we want to dive into multivolume_work, periodical, newspaper, year, month...
+    # we are looking for issue, volume, monograph, lecture, dossier, act, judgement, study, paper, *_thesis, report, register, file, fragment, manuscript...
+    while ((div := topdiv.find('./mets:div', NS)) is not None and
+           div.get('ADMID') is not None):
+        topdiv = div
+    #for div in topdiv.iterdescendants('{%s}div' % NS['mets']):
+    # recursive:
+    def find_depth(div, depth=0):
+        div_id = div.get('ID', div.getparent().get('ID'))
+        return {
+            'label': div.get('LABEL') or div.get('ORDERLABEL') or '',
+            'type': div.get('TYPE') or '',
+            'id': div_id,
+            'page': pages.get(smlinks.get(div_id, ''), ''),
+            'depth': depth,
+            'subs': [find_depth(subdiv, depth+1)
+                     for subdiv in div.findall('./mets:div', NS)]
+        }
+    struct = find_depth(topdiv)
+    return struct
 
 def iso8601toiso32000(datestring):
     date = datetime.fromisoformat(datestring)
