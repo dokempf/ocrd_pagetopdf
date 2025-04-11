@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * missing import, #29
+  * more robust `mets:structMap` handling, #30
+  * Dockerfile: `apt update` before `apt install`, #30
+
 ## [2.0.0] - 2025-03-12
 
 Whats changed:
