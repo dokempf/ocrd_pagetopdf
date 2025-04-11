@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.0.1] - 2025-04-11
+
 Fixed:
 
   * missing import, #29
