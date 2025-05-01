@@ -2,8 +2,9 @@ PYTHON ?= python3
 PIP ?= pip3
 PYTEST_ARGS ?= -vv
 
-DOCKER_BASE_IMAGE = docker.io/ocrd/core:v3.3.0
-DOCKER_TAG = ocrd/pagetopdf
+DOCKER_BASE_IMAGE ?= docker.io/ocrd/core:latest
+DOCKER_TAG ?= ocrd/pagetopdf
+DOCKER ?= docker
 
 help:
 	@echo ""
@@ -74,7 +75,7 @@ tests/assets: repo/assets
 
 # Build Docker image
 docker:
-	docker build \
+	$(DOCKER) build \
 	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
 	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
 	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
