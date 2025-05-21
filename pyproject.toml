@@ -48,7 +48,7 @@ dependencies = {file = ["requirements.txt"]}
 optional-dependencies.test = {file = ["requirements-test.txt"]}
 
 [tool.setuptools.package-data]
-"*" = ["PageToPdf.jar", "*.txt", "ocrd-tool.json"]
+"*" = ["PageToPdf.jar", "PageConverter.jar", "*.txt", "ocrd-tool.json"]
 "ocrd_pagetopdf.data" = ["*.ttf", "*.otf"]
 "ocrd_pagetopdf.lib" = ["*.jar"]
 
