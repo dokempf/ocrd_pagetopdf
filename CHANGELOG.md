@@ -5,6 +5,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+
+## [2.0.2] - 2025-05-21
+
+Fixed:
+
+  * ocrd-altotopdf: add missing resource file `PageConverter.jar`
+  * multipage: resolve path names relative to workspace directory
+
+Changed:
+
+  * ocrd-altotopdf: allow running with missing ALTO files for some pages
+
 ## [2.0.1] - 2025-04-11
 
 Fixed:
