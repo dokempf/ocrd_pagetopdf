@@ -24,6 +24,7 @@ from ocrd_utils import (
     polygon_from_points,
     resource_filename,
     make_file_id,
+    pushd_popd,
     REGEX_FILE_ID,
     config,
 )
@@ -71,6 +72,10 @@ class PAGE2PDF(Processor):
     def process_workspace(self, workspace: Workspace) -> None:
         super().process_workspace(workspace)
         if self.parameter['multipage']:
+            self._create_multipage(workspace)
+
+    def _create_multipage(self, workspace: Workspace) -> None:
+        with pushd_popd(workspace.directory):
             output_file_id = self.parameter['multipage']
             if not REGEX_FILE_ID.fullmatch(output_file_id):
                 output_file_id = output_file_id.replace(':', '_')
